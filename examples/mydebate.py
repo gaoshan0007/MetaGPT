@@ -24,17 +24,18 @@ class SpeakAloud(Action):
 
     PROMPT_TEMPLATE: str = """
     ## 背景
-    假设你是{name}，你正在与{opponent_name}进行辩论。
-    ## 辩论历史
-    之前的回合：
+    你正在辩论，你带有强烈的偏见主张{profile}, 请关于{idea}展开辩论。
+    ## 辩论历史    
     {context}
     ## 你的回合
-    现在轮到你了，你应该紧密回应对手的最新论点，陈述你的立场，捍卫你的论点，并攻击对手的论点， 用80个词以内，以{name}的修辞和观点，你的论点将是：
+    现在轮到你了，你应该攻击对手的论点，跳过已经说过的内容，禁止使用辩论历史里面的内容, 用80个词以内
+    以{name}的修辞和观点，你的论点将是：
     """
     name: str = "SpeakAloud"
 
-    async def run(self, context: str, name: str, opponent_name: str):
-        prompt = self.PROMPT_TEMPLATE.format(context=context, name=name, opponent_name=opponent_name)
+    async def run(self, context: str, name: str, profile:str, opponent_name: str, idea: str):
+        #print(self)
+        prompt = self.PROMPT_TEMPLATE.format(context=context, name=name, profile=profile, opponent_name=opponent_name, idea = idea)
         logger.info("prompt: "+prompt)
 
         rsp = await self._aask(prompt)
@@ -48,6 +49,7 @@ class Debator(Role):
     name: str = ""
     profile: str = ""
     opponent_name: str = ""
+    idea: str = ""
 
     def __init__(self, **data: Any):
         super().__init__(**data)
@@ -68,7 +70,7 @@ class Debator(Role):
         context = "\n".join(f"{msg.sent_from}: {msg.content}" for msg in memories)
         # print(context)
 
-        rsp = await todo.run(context=context, name=self.name, opponent_name=self.opponent_name)
+        rsp = await todo.run(context=context, name=self.name, profile=self.profile ,opponent_name=self.opponent_name, idea=self.idea)
 
         msg = Message(
             content=rsp,
@@ -84,16 +86,16 @@ class Debator(Role):
 
 async def debate(idea: str, investment: float = 3.0, n_round: int = 2):
     """Run a team of presidents and watch they quarrel. :)"""
-    zhangsan = Debator(name="zhangsan", profile="男人至上", opponent_name="lisi")
-    lisi = Debator(name="lisi", profile="女人至上", opponent_name="zhangsan")
+    zhangsan = Debator(name="张三", profile="大男子主义", opponent_name="李四", idea="男人不应该做家务")
+    lisi = Debator(name="李四", profile="女权主义", opponent_name="张三", idea="男人应该做家务")
     team = Team()
     team.hire([zhangsan, lisi])
     team.invest(investment)
-    team.run_project(idea, send_to="zhangsan")  # send debate topic to zhangsan and let him speak first
+    team.run_project(idea, send_to="张三")  # send debate topic to zhangsan and let him speak first
     await team.run(n_round=n_round)
 
 
-def main(idea: str, investment: float = 3.0, n_round: int = 10):
+def main(idea: str = "", investment: float = 3.0, n_round: int = 5):
     """
     :param idea: Debate topic, such as "Topic: The U.S. should commit more in climate change fighting"
                  or "lisi: Climate change is a hoax"
