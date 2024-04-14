@@ -34,7 +34,7 @@ class SpeakAloud(Action):
     name: str = "SpeakAloud"
 
     async def run(self, context: str, name: str, profile:str, opponent_name: str, idea: str):
-        #print(self)
+        #print(self) 测试
         prompt = self.PROMPT_TEMPLATE.format(context=context, name=name, profile=profile, opponent_name=opponent_name, idea = idea)
         logger.info("prompt: "+prompt)
 
